@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 
-import { getService, servicesForBarber } from "@/data/site";
+import { barbers, getService, servicesForBarber } from "@/data/site";
 import { getSlots, worksOnDate } from "./availability";
 import { localTransport } from "./transport";
 import { validateAll, validateStep } from "./validation";
@@ -99,7 +99,8 @@ export function BookingProvider({
     setErrors((e) => ({ ...e, barber: undefined }));
     setDraft((prev) => {
       const allowed = servicesForBarber(id).some((s) => s.id === prev.serviceId);
-      const stillWorks = prev.date ? worksOnDate({ ...servicesFallback(id) }, prev.date) : true;
+      const barber = barbers.find((b) => b.id === id);
+      const stillWorks = barber && prev.date ? worksOnDate(barber, prev.date) : true;
       return {
         ...prev,
         barberId: id,
@@ -258,10 +259,3 @@ export function useBooking() {
 }
 
 export const selectedService = (draft: BookingDraft) => getService(draft.serviceId);
-
-// local helper: barbers module lookup without circular import noise
-function servicesFallback(id: string) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { barbers } = require("@/data/site") as typeof import("@/data/site");
-  return barbers.find((b) => b.id === id)!;
-}
